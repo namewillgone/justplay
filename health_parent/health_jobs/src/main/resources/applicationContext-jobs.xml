@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                  http://www.springframework.org/schema/beans/spring-beans.xsd
+                  http://www.springframework.org/schema/context
+                  http://www.springframework.org/schema/context/spring-context.xsd">
+    <!--spring整合quartz-->
+    <bean id="jobDemo" class="com.itheima.job.ClearImgJob"></bean>
+    <!--1：创建JobDetail对象,作用是负责通过反射调用指定的Job，注入目标对象，注入目标方法-->
+    <bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="jobDemo"></property>
+        <property name="targetMethod" value="executeClearImg"></property>
+    </bean>
+    <!--2：注册一个触发器，指定任务触发的时间-->
+    <bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="jobDetail"></property>
+        <!--定义触发任务的时间
+        -->
+        <property name="cronExpression" value="0 31 12 * * ?"></property>
+    </bean>
+
+    <!--3：注册一个统一的调度工厂，通过这个调度工厂调度任务-->
+    <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="cronTrigger"></ref>
+            </list>
+        </property>
+    </bean>
+
+    <!--要想在类中使用组件、注入，必须开启组件扫描-->
+    <!--<context:component-scan base-package="com.itheima"></context:component-scan>-->
+    <!--才可以使用@Autowired-->
+    <context:annotation-config></context:annotation-config>
+</beans>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.health.dao.OrderSettingDao">
+
+    <!--保存预约设置表-->
+    <insert id="add" parameterType="orderSetting">
+        insert into t_ordersetting(orderDate,number,reservations) values(#{orderDate},#{number},#{reservations})
+    </insert>
+
+    <!--使用预约设置时间，查询预约设置是否存在数据-->
+    <select id="findCountByOrderDate" parameterType="date" resultType="long">
+        SELECT COUNT(*) FROM t_ordersetting WHERE orderDate = #{orderDate}
+    </select>
+
+    <!--根据预约设置的时间，更新最多预约的人数字段-->
+    <update id="update" parameterType="orderSetting">
+        update t_ordersetting set number = #{number} where orderDate = #{orderDate}
+    </update>
+
+    <!--使用当前月作为条件，查询当前月对应的预约设置的数据-->
+    <select id="findOrderSettingByOrderDateMonth" parameterType="map" resultType="orderSetting">
+        SELECT * FROM t_ordersetting WHERE orderDate BETWEEN #{beginDate} AND #{endDate}
+    </select>
+
+    <!--使用预约设置时间，查询预约设置信息-->
+    <select id="findOrderSettingByOrderDate" parameterType="date" resultType="orderSetting">
+        SELECT * FROM t_ordersetting WHERE orderDate = #{orderDate}
+    </select>
+
+    <!--使用预约时间，更新已经预约的人数（加1）-->
+    <update id="updateReservationsByOrderDate" parameterType="orderSetting">
+        update t_ordersetting set reservations = #{reservations} where orderDate = #{orderDate}
+    </update>
+</mapper>

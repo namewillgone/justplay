@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.health.dao.SetmealDao">
+
+    <!--新增套餐，返回id-->
+    <insert id="add" parameterType="setmeal">
+        <selectKey resultType="int" keyProperty="id" order="AFTER">
+            select last_insert_id()
+        </selectKey>
+        insert into t_setmeal(name,code,helpCode,sex,age,price,remark,attention,img) values(#{name},#{code},#{helpCode},#{sex},#{age},#{price},#{remark},#{attention},#{img})
+    </insert>
+
+    <!--新增检查项和检查组的中间表-->
+    <insert id="addSetmealAndCheckGroup" parameterType="map">
+        insert into t_setmeal_checkgroup(setmeal_id,checkgroup_id) values (#{setmeal_id},#{checkgroup_id})
+    </insert>
+
+    <!--条件查询-->
+    <select id="findPageByCondition" parameterType="string" resultType="setmeal">
+        select * from t_setmeal
+        <where>
+            <if test="value!=null and value.length>0">
+                code = #{value} or name like concat("%",#{value},"%") or helpCode = #{value}
+            </if>
+        </where>
+    </select>
+
+    <!--查询所有-->
+    <select id="findAll" resultType="setmeal">
+        select * from t_setmeal
+    </select>
+
+    <!--使用套餐id，查询套餐详情-->
+    <select id="findById" parameterType="int" resultMap="setmealMap">
+        select * from t_setmeal where id = #{id}
+    </select>
+    <!--完成数据库查询的字段和实体中属性的映射-->
+    <resultMap id="setmealMap" type="setmeal">
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+        <result property="code" column="code"></result>
+        <result property="helpCode" column="helpCode"></result>
+        <result property="sex" column="sex"></result>
+        <result property="age" column="age"></result>
+        <result property="price" column="price"></result>
+        <result property="remark" column="remark"></result>
+        <result property="attention" column="attention"></result>
+        <result property="img" column="img"></result>
+        <!--column="id"：表示传递id字段的值（套餐id）-->
+        <!--property="checkGroups"：将查询的结果封装到checkGroups的集合中-->
+        <!--select=""：调用哪个Dao中的哪个方法完成-->
+        <collection property="checkGroups" column="id" select="com.itheima.health.dao.CheckGroupDao.findCheckGroupListBySetmealId"></collection>
+    </resultMap>
+
+    <select id="findSetmealCount" resultType="map">
+        SELECT s.name name,COUNT(o.id) value FROM t_order o,t_setmeal s WHERE o.setmeal_id = s.id GROUP BY s.name
+    </select>
+</mapper>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.health.dao.OrderDao">
+    <resultMap id="orderMap" type="order">
+        <id property="id" column="id"></id>
+        <result property="memberId" column="member_id"></result>
+        <result property="orderDate" column="orderDate"></result>
+        <result property="orderType" column="orderType"></result>
+        <result property="orderStatus" column="orderStatus"></result>
+        <result property="setmealId" column="setmeal_id"></result>
+    </resultMap>
+
+    <!--使用查询条件，查询订单的集合-->
+    <select id="findOrderListByCondition" parameterType="order" resultMap="orderMap">
+        <!--SELECT * FROM t_order WHERE member_id = #{memeberId} AND orderDate = {orderDate} AND setmeal_id = #{setmealId}-->
+        SELECT * FROM t_order
+        <where>
+            <if test="id!=null">
+                and id = #{id}
+            </if>
+            <if test="memberId!=null">
+                and member_id = #{memberId}
+            </if>
+            <if test="orderDate!=null">
+                and orderDate = #{orderDate}
+            </if>
+            <if test="orderType!=null">
+                and orderType = #{orderType}
+            </if>
+            <if test="orderStatus!=null">
+                and orderStatus = #{orderStatus}
+            </if>
+            <if test="setmealId!=null">
+                and setmeal_id = #{setmealId}
+            </if>
+        </where>
+    </select>
+    
+    <!--保存订单-->
+    <insert id="add" parameterType="order">
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            select last_insert_id()
+        </selectKey>
+        insert into t_order(member_id,orderDate,orderType,orderStatus,setmeal_id) values(#{memberId},#{orderDate},#{orderType},#{orderStatus},#{setmealId})
+    </insert>
+
+    <!--使用订单id，查询订单的详细信息，包括体检人姓名（member）、体检套餐名称（setmeal）、体检日期（orderData）、预约类型（orderType）-->
+    <select id="findById" parameterType="int" resultType="map">
+        SELECT m.name member,s.name setmeal,o.orderDate,o.orderType FROM t_order o,t_member m,t_setmeal s
+        WHERE o.member_id = m.id AND o.setmeal_id = s.id
+        AND o.id = #{orderId}
+    </select>
+
+    <!--今日预约数-->
+    <select id="findTodayOrderNumber" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM t_order WHERE orderDate = #{today}
+    </select>
+
+    <!--今日到诊数-->
+    <select id="findTodayVisitsNumber" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM t_order WHERE orderDate = #{today} AND orderStatus = '已到诊'
+    </select>
+
+    <!--本周（本月）预约数统计-->
+    <select id="findThisOrderNumber" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM t_order WHERE orderDate BETWEEN  #{begin} AND  #{end}
+    </select>
+
+    <!--本周（本月）到诊数统计-->
+    <select id="findThisVisitsNumber" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM t_order WHERE orderDate BETWEEN  #{begin} AND  #{end} AND orderStatus = '已到诊'
+    </select>
+    
+    <!--统计热门套餐-->
+    <select id="findHotSetmeal" resultType="map">
+        SELECT s.name,COUNT(o.id) setmeal_count,COUNT(o.id)/(SELECT COUNT(id) FROM t_order) proportion
+        FROM t_order o,t_setmeal s
+        WHERE o.setmeal_id = s.id GROUP BY s.name
+        ORDER BY setmeal_count DESC
+        LIMIT 0,4
+    </select>
+</mapper>
