@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.health.dao.CheckGroupDao">
+
+    <!--新增检查组-->
+    <insert id="add" parameterType="checkGroup">
+        <!--
+             keyProperty="id"：查询的id的值封装到id的属性中
+             resultType="int"：封装的数据类型
+             order="AFTER"：执行顺序，在insert语句之后执行
+        -->
+        <selectKey keyProperty="id" resultType="int" order="AFTER">
+            select last_insert_id()
+        </selectKey>
+        insert into t_checkgroup(code,name,helpCode,sex,remark,attention) values(#{code},#{name},#{helpCode},#{sex},#{remark},#{attention})
+    </insert>
+
+    <!--向检查组和检查项的中间表插入数据-->
+    <insert id="addCheckGroupAndCheckItem">
+        insert into t_checkgroup_checkitem(checkgroup_id,checkitem_id) values(#{check_group_id},#{check_item_id});
+    </insert>
+    <!--向检查组和检查项的中间表插入数据-->
+    <insert id="addCheckGroupAndCheckItemMap" parameterType="map">
+        insert into t_checkgroup_checkitem(checkgroup_id,checkitem_id) values(#{check_group_id},#{check_item_id});
+    </insert>
+
+    <!--使用查询条件，查询结果数据-->
+    <select id="findPageByCondition" parameterType="string" resultType="checkGroup">
+        SELECT * FROM t_checkgroup
+           <if test="value!=null and value.length>0">
+               WHERE CODE = #{value} OR NAME LIKE concat('%',#{value},'%') OR helpCode = #{value}
+           </if>
+    </select>
+
+    <!--使用检查组id，查询检查组对象-->
+    <select id="findById" parameterType="int" resultType="checkGroup">
+         select * from t_checkgroup where id = #{id}
+    </select>
+
+    <!--使用检查组id，查询检查项的id集合-->
+    <select id="findCheckItemListByCheckGroupId" parameterType="int" resultType="int">
+        SELECT checkitem_id FROM t_checkgroup_checkitem WHERE checkgroup_id = #{checkGroupId}
+    </select>
+
+    <!--更新检查组，动态sql实现传递空值，在更新的时候，保留数据库之前的值-->
+    <update id="update" parameterType="checkGroup">
+        update t_checkgroup
+        <set>
+            <if test="code!=null and code.length>0">
+               code = #{code},
+            </if>
+            <if test="name!=null and name.length>0">
+                name = #{name},
+            </if>
+            <if test="helpCode!=null and helpCode.length>0">
+                helpCode = #{helpCode},
+            </if>
+            <if test="sex!=null and sex.length>0">
+                sex = #{sex},
+            </if>
+            <if test="remark!=null and remark.length>0">
+                remark = #{remark},
+            </if>
+            <if test="attention!=null and attention.length>0">
+                attention = #{attention},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--使用检查组id，删除检查组和检查项的中间表数据-->
+    <delete id="deleteCheckGroupAndCheckItemByCheckGroupId" parameterType="int">
+        delete from t_checkgroup_checkitem where checkgroup_id = #{checkgroupId}
+    </delete>
+
+    <!--查询所有检查组-->
+    <select id="findAll" resultType="checkGroup">
+        select * from t_checkgroup
+    </select>
+
+    <!--使用套餐id，查询套餐id具有的检查组的集合-->
+    <select id="findCheckGroupListBySetmealId" parameterType="int" resultMap="checkGroupMap">
+        <!--SELECT * FROM t_checkgroup WHERE id IN (SELECT checkgroup_id FROM t_setmeal_checkgroup WHERE setmeal_id = #{setmealId})-->
+        SELECT cg.* FROM t_checkgroup cg,t_setmeal_checkgroup scg WHERE cg.id=scg.checkgroup_id AND scg.setmeal_id=#{setmealId}
+    </select>
+    
+    <resultMap id="checkGroupMap" type="checkGroup">
+        <id property="id" column="id"></id>
+        <result property="code" column="code"></result>
+        <result property="name" column="name"></result>
+        <result property="helpCode" column="helpCode"></result>
+        <result property="sex" column="sex"></result>
+        <result property="remark" column="remark"></result>
+        <result property="attention" column="attention"></result>
+        <collection property="checkItems" column="id" select="com.itheima.health.dao.CheckItemDao.findCheckItemListByCheckGroupId"></collection>
+    </resultMap>
+
+</mapper>
